@@ -10,7 +10,7 @@
     /* jshint browser:true */
     if (window.location.protocol === 'about:') {
       /* jshint -W060 */
-      document.write('<base href="chrome://about-history/content/" />');
+      document.write('<base href="chrome://about-new-tab/content/" />');
     }
     </script>
     <link href="vendor/bootstrap/dist/css/bootstrap.min.css " media="all" rel="stylesheet" type="text/css" />
@@ -19,19 +19,13 @@
   </head>
   <body>
 
-    <button type="button" class="btn btn-lg" id="date-back">Yesterday</button>
-    <button type="button" class="btn btn-lg" id="date-forward">Tomorrow</button>
-
     <div class="container">
+
       <div class="row">
-        <div class="col-xs-8 col-sm-8 col-md-8 col-lg-8">
-          <h2 ><span class="text-muted">about:</span>history</h2>
-          <button type="button" id="date" class="btn btn-default">date</button>
-        </div>
-        <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
-          <form role="form">
-            <h2><input class="form-control" placeholder="Filter" type="search" id="query" name="query"></h2>
-          </form>
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+          <div id="devices">
+            <ol id="device-list-view" class="list-unstyled"></ol>
+          </div>
         </div>
       </div>
 
@@ -45,28 +39,9 @@
     </div>
 
     <script type="text/template" id="history-item-template">
-      <div class="row <%- selected() %>">
-        <div class="col-xs-11 col-sm-11 col-md-11 col-lg-11">
-          <div class="circle"></div>
-          <hr class="line">
-        </div>
-        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
-          <button class="btn btn-sm action-expand" data-toggle="button">
-
-          </button>
-        </div>
-      </div>
-
       <div class="row">
 
-        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
-          <span title="<%- get('time').calendar() %>" class="time text-muted"><%- get('time').format("h:mm a") %></span>
-        </div>
-
         <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3">
-          <% if (isBookmarked()) { %>
-            <div class="bookmarked icon"/>
-          <% } %>
           <% if (hasImage()) { %>
           <img class="center-block img-responsive image" />
           <% } %>
@@ -82,9 +57,18 @@
             </div>
 
             <div class="col-xs-8 col-sm-8 col-md-8 col-lg-8">
-              <a href="<%- get('url') %>" title="<%- title() %>" target="_blank" class="title"><%- title() %></a>
-              <div title="<%- get('url') %>" class="text-muted host"><%- get('host') %></div>
+              <a href="<%- get('url') %>" title="<%- title() %>" target="_blank" class="title">
+                <% if (isBookmarked()) { %>
+                  <div class="bookmarked icon"/>
+                <% } %>
+
+                <%- title() %>
+              </a>
+              <div title="<%- get('url') %>" class="text-muted host">
+                <%- get('host') %>
+              </div>
               <div class="block-description hidden meta">
+                <span class="text-muted"><%- get('time').format("h:mm a") %></span>
                 <% if (description()) { %>
                   <blockquote class="text-description text-muted small"><%- description() %></blockquote>
                   <% if (has('referrer')) { %><div><%- get('referrer') %></div><% } %>
@@ -108,15 +92,6 @@
               <% } %>
             </div>
 
-            <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3">
-              <ol class="list-unstyled meta invisible">
-                <li><a href="<%- get('url') %>" title="Open in a new Tab" target="_blank">Open</a></li>
-                <li><a href="" id="action-delete">Delete</a></li>
-                <li><a href="" id="action-delete-related">Delete all related</a></li>
-                <li><a href="" id="action-search-related">View all related</a></li>
-              </ol>
-            </div>
-
           </div>
         </div>
 
@@ -124,15 +99,10 @@
     </script>
 
       <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-        <div id="lasthistory">
-          <h2>We can’t go back any further!</h2>
-            <img src="images/car.png"/>
-          <p>No more history items left to display.</p><br>
-          <p><a href="#top">Back to top</a></p>
-        </div>
+        <!-- footer message area -->
      </div>
+
       <div id="footer" class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-        <a href="#top"><img src="images/up.png"/></a>
         <p>Brought to you by</p>
         <p><a class="twitter-handle" target="_blank" href="https://twitter.com/antlam7">@antlam7</a>, <a class="twitter-handle" target="_blank" href="https://twitter.com/clarkbw">@clarkbw</a>, <a class="twitter-handle" target="_blank" href="https://twitter.com/erikvold">@erikvold</a></p><br>
         <p>Follow this project on</p>

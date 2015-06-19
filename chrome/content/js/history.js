@@ -33,9 +33,6 @@ var HistoryItem = Backbone.Model.extend({
   title : function() {
     return this._getNotNull(['twitter:title', 'og:title', 'title']);
   },
-  selected : function() {
-    return (this.get('selected') || false) ? 'selected' : '';
-  },
   favicon : function() {
     return this.get('icon');
   },
@@ -63,7 +60,6 @@ var HistoryItem = Backbone.Model.extend({
 
 var HistoryItemView = Backbone.View.extend({
   events : {
-    'click .circle, hr': 'onSelect',
     'click .action-expand' : 'onClickHistoryExpand',
     'click .action-ellipsis' : 'onClickEllipsisExpand',
     'click #action-delete' : 'onDelete',
@@ -78,7 +74,6 @@ var HistoryItemView = Backbone.View.extend({
   },
   render : function render() {
     this.$el.html(this.template(this.model));
-    this.$el.find('.time').tooltip();
     this.$el.find('img.image').error(({ target }) => {
       target.classList.add('hide');
     }).attr('src', this.model.image());
@@ -100,11 +95,6 @@ var HistoryItemView = Backbone.View.extend({
 
     // we need to return true so the event can bubble up to the toggle button
     return true;
-  },
-  onSelect: function() {
-    let selected = !this.model.get('selected');
-    this.model.set('selected', selected);
-    return false;
   },
   onDelete: function() {
     addon.emit('history:events:delete', this.model.get('url'));
@@ -180,27 +170,6 @@ var HistoryListView = Backbone.View.extend({
   }
 });
 
-var SearchInputView = Backbone.View.extend({
-  events : {
-    'keyup' : 'onKeyUp'
-  },
-  initialize: function(options) {
-    this.datePickerView = options.datePickerView;
-  },
-  onKeyUp : function(e) {
-    // on ESC clear the search
-    if (e.keyCode === 27) {
-      this.$el.val('');
-    }
-    sendQuery({
-      date: this.datePickerView.model.date(),
-      query: $('#query').val()
-    });
-    // possibly debounce every second to set the query
-    // this.router.navigate('#query/query');
-  }
-});
-
 function sendQuery({ date, query }) {
   addon.emit('history:events:query', {
     from: moment(date).startOf('day').format('X') * 1000,
@@ -215,136 +184,12 @@ function isSameDay (day1, day2) {
          day1.isSame(day2, 'year');
 }
 
-var DateModel = Backbone.Model.extend({
-  subtractDay : function() {
-    var m = this.moment().subtract(1, 'days');
-    this.set('date', m.toJSON());
-  },
-  addDay : function() {
-    var m = this.moment().add(1, 'days');
-    this.set('date', m.toJSON());
-  },
-  isYesterday: function() {
-    return isSameDay(moment().subtract(1, 'days'), this.moment());
-  },
-  isToday : function() {
-    return isSameDay(moment(), this.moment());
-  },
-  isTomorrow: function() {
-    return isSameDay(moment().add(1, 'days'), this.moment());
-  },
-  setDate : function(date) {
-    this.set('date', moment(date).startOf('day').toJSON());
-  },
-  moment : function() {
-    return moment(this.get('date'));
-  },
-  date : function() {
-    return this.moment().toDate();
-  }
-});
-
-var BackDateStepView = Backbone.View.extend({
-  events : {
-    'click' : 'onClick'
-  },
-  onClick : function() {
-    this.model.subtractDay();
-  },
-  initialize: function initialize() {
-    this.model.on('change', this.render, this);
-  },
-  render: function() {
-    if (this.model.isTomorrow()) {
-      this.$el.text('Today');
-    } else if (this.model.isToday()) {
-      this.$el.text('Yesterday');
-    } else {
-      this.$el.text('Back');
-    }
-    return this;
-  }
-});
-
-var ForwardDateStepView = Backbone.View.extend({
-  events : {
-    'click' : 'onClick'
-  },
-  onClick : function() {
-    this.model.addDay();
-  },
-  initialize: function initialize() {
-    this.model.on('change', this.render, this);
-  },
-  render: function() {
-    if (this.model.isTomorrow()) {
-      this.$el.text('Beyond');
-      this.$el.addClass('hide');
-    } else if (this.model.isToday()) {
-      this.$el.text('Tomorrow');
-      this.$el.removeClass('hide');
-    } else if (this.model.isYesterday()) {
-      this.$el.text('Today');
-      this.$el.removeClass('hide');
-    } else if (isSameDay(moment().subtract(2, 'days'), this.model.moment())) {
-      this.$el.text('Yesterday');
-      this.$el.removeClass('hide');
-    } else {
-      this.$el.text('Forward');
-      this.$el.removeClass('hide');
-    }
-    return this;
-  }
-});
-
-var DatePickerView = Backbone.View.extend({
-  events : {
-    'click' : 'onClick',
-    'changeDate' : 'onChangeDate'
-  },
-  onClick : function() {
-    this.$el.datepicker('show');
-  },
-  onChangeDate : function(e) {
-    this.model.setDate(e.date);
-  },
-  initialize: function initialize() {
-    this.model.on('change', this.render, this);
-    this.model.on('change', function() {
-      sendQuery({
-        date: this.model.date(),
-        query: $('#query').val()
-      });
-    }, this);
-
-    this.back = new BackDateStepView({model: this.model, el: $('#date-back')});
-    this.forward = new ForwardDateStepView({model: this.model, el: $('#date-forward')});
-  },
-  render: function() {
-    var date = this.model.date();
-    var tomorrow = moment().add(1, 'days').toDate();
-    this.$el.datepicker({autoclose: true, todayHighlight: true, endDate: tomorrow, todayBtn: 'linked'});
-    this.$el.datepicker('setDate', date);
-    this.$el.text(moment(date).format('dddd, MMMM Do' + ((moment().isSame(date, 'year')) ? '' : ' YYYY')));
-    return this;
-  }
-});
-
 var Application = Backbone.View.extend({
   initialize: function initialize() {
     var hl = this.historyList = new HistoryList();
     this.historyListView = new HistoryListView({
       collection : this.historyList,
       el : $('#history-list-view')
-    });
-    let dateModel = new DateModel();
-    this.datePickerView = new DatePickerView({
-      model : dateModel,
-      el : $('#date')
-    });
-    this.searchInputView = new SearchInputView({
-      el : $('#query'),
-      datePickerView: this.datePickerView
     });
 
     addon.on('history:reset', items => {
@@ -357,7 +202,7 @@ var Application = Backbone.View.extend({
     addon.on('history:add', item => {
       // check if the time for the history item is for the
       // date currently displayed
-      if (isSameDay(moment(item.time), dateModel.moment())) {
+      if (isSameDay(moment(item.time), moment())) {
         var hi = hl.findWhere({url: item.url});
         if (hi) {
           hi.set(item);
@@ -378,7 +223,10 @@ var Application = Backbone.View.extend({
 
     // ######### INIT DATE #############
     // This causes our initial load of the current date
-    this.datePickerView.model.setDate(new Date());
+    sendQuery({
+      date: new Date(),
+      query: ''
+    });
   }
 });
 

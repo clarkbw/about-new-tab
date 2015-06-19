@@ -1,7 +1,7 @@
 {
-  "name": "about-history",
-  "title": "About History",
-  "id": "about-history@jetpack",
+  "name": "about-new-tab",
+  "title": "About New Tab Page",
+  "id": "about-new-tab@jetpack",
   "description": "A better in-content history view",
   "author": "Bryan Clark",
   "contributors": [
@@ -15,6 +15,7 @@
     "start": "jpm run -b nightly",
     "pretest": "jscs . && jshint .",
     "test": "jpm test -b nightly",
+    "postinstall": "bower install",
     "outdated": "npm outdated --depth=0"
   },
   "repository": {
@@ -22,7 +23,6 @@
     "url": "https://github.com/clarkbw/about-history.git"
   },
   "dependencies": {
-    "about-what": "clarkbw/about-what#js-standards",
     "indexed-db-storage": "~0.2.0"
   },
   "devDependencies": {
